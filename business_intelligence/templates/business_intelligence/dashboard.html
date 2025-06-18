@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Penjualan Walmart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background-color: #1e1e2f;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background-color: #111827;
+      padding: 20px 15px;
+    }
+    .sidebar h4 {
+      color: white;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .sidebar a {
+      display: block;
+      color: #d1d5db;
+      text-decoration: none;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #374151;
+    }
+    .main-content {
+      margin-left: 260px;
+      padding: 30px;
+    }
+    .card {
+      background-color: #b9b5b5;
+      border: none;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    canvas {
+      height: 400px !important;
+    }
+    .tab-section {
+      display: none;
+    }
+    .tab-section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h4>📊 BI Dashboard</h4>
+    <a onclick="showTab('sales')">Sales Performance</a>
+    <a onclick="showTab('external')">External Factors</a>
+    <a onclick="showTab('macro')">Macroeconomic</a>
+  </div>
+
+  <div class="main-content">
+    <h1>📈 Dashboard Penjualan Walmart</h1>
+
+    <!-- SALES PERFORMANCE -->
+    <div id="tab-sales" class="tab-section active">
+      <div class="card">
+        <h5>📆 Penjualan Bulanan (Holiday vs Non-Holiday)</h5>
+        <canvas id="chart1"></canvas>
+      </div>
+      <div class="card">
+        <h5>📅 Tren Penjualan Mingguan</h5>
+        <canvas id="chart4"></canvas>
+      </div>
+      <div class="card">
+        <h5>🏬 Performa Rata-rata Penjualan per Toko</h5>
+        <canvas id="chart5"></canvas>
+      </div>
+    </div>
+
+    <!-- EXTERNAL FACTORS -->
+    <div id="tab-external" class="tab-section">
+      <div class="card">
+        <h5>🌡️ Pengaruh Suhu & Harga BBM</h5>
+        <canvas id="chart2"></canvas>
+      </div>
+    </div>
+
+    <!-- MACROECONOMIC -->
+    <div id="tab-macro" class="tab-section">
+      <div class="card">
+        <h5>📉 Dampak CPI & Unemployment</h5>
+        <canvas id="chart3"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Injected JSON Data -->
+  {{ labels_schema1|json_script:"labels1" }}
+  {{ data_nonholiday|json_script:"dataNon" }}
+  {{ data_holiday|json_script:"dataHol" }}
+  {{ labels_schema2|json_script:"labels2" }}
+  {{ data_schema2|json_script:"data2" }}
+  {{ fuel_labels|json_script:"fuelLabels" }}
+  {{ labels_schema3|json_script:"labels3" }}
+  {{ data_schema3|json_script:"data3" }}
+  {{ unemp_labels|json_script:"unempLabels" }}
+  {{ labels_weekly|json_script:"labels4" }}
+  {{ data_weekly|json_script:"data4" }}
+  {{ labels_store|json_script:"labels5" }}
+  {{ data_store|json_script:"data5" }}
+
+  <!-- Chart.js Logic + Tab Switch -->
+  <script>
+    const labels1 = JSON.parse(document.getElementById("labels1").textContent);
+    const dataNon = JSON.parse(document.getElementById("dataNon").textContent);
+    const dataHol = JSON.parse(document.getElementById("dataHol").textContent);
+
+    const labels2 = JSON.parse(document.getElementById("labels2").textContent);
+    const data2 = JSON.parse(document.getElementById("data2").textContent);
+    const fuelLabels = JSON.parse(document.getElementById("fuelLabels").textContent);
+
+    const labels3 = JSON.parse(document.getElementById("labels3").textContent);
+    const data3 = JSON.parse(document.getElementById("data3").textContent);
+    const unempLabels = JSON.parse(document.getElementById("unempLabels").textContent);
+
+    const labels4 = JSON.parse(document.getElementById("labels4").textContent);
+    const data4 = JSON.parse(document.getElementById("data4").textContent);
+
+    const labels5 = JSON.parse(document.getElementById("labels5").textContent);
+    const data5 = JSON.parse(document.getElementById("data5").textContent);
+
+    const options = {
+      responsive: true,
+      plugins: { legend: { labels: { color: 'white' } } },
+      scales: { x: { ticks: { color: 'white' } }, y: { ticks: { color: 'white' } } }
+    };
+
+    new Chart(document.getElementById("chart1"), {
+      type: "bar",
+      data: {
+        labels: labels1,
+        datasets: [
+          { label: "Non-Holiday", data: dataNon, backgroundColor: "#3b82f6" },
+          { label: "Holiday", data: dataHol, backgroundColor: "#f59e0b" }
+        ]
+      },
+      options
+    });
+
+    new Chart(document.getElementById("chart2"), {
+      type: "bar",
+      data: {
+        labels: labels2,
+        datasets: fuelLabels.map((label, i) => ({
+          label: label,
+          data: data2[i],
+          backgroundColor: `hsl(${i * 60}, 70%, 60%)`
+        }))
+      },
+      options
+    });
+
+    new Chart(document.getElementById("chart3"), {
+      type: "bar",
+      data: {
+        labels: labels3,
+        datasets: unempLabels.map((label, i) => ({
+          label: label,
+          data: data3[i],
+          backgroundColor: `hsl(${i * 60 + 120}, 70%, 60%)`
+        }))
+      },
+      options
+    });
+
+    new Chart(document.getElementById("chart4"), {
+      type: "line",
+      data: {
+        labels: labels4,
+        datasets: [{
+          label: "Total Weekly Sales",
+          data: data4,
+          borderColor: "#22d3ee",
+          backgroundColor: "rgba(34, 211, 238, 0.2)",
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options
+    });
+
+    new Chart(document.getElementById("chart5"), {
+      type: "bar",
+      data: {
+        labels: labels5,
+        datasets: [{
+          label: "Avg Weekly Sales",
+          data: data5,
+          backgroundColor: "#a78bfa"
+        }]
+      },
+      options
+    });
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-section').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+  </script>
+</body>
+</html>
